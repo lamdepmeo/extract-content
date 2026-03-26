@@ -1,8 +1,8 @@
 import type { NextConfig } from 'next';
 
 const nextConfig: NextConfig = {
-  experimental: {
-    nodeMiddleware: true,
+  eslint: {
+    dirs: ['app', 'lib', 'netlify'],
   },
 };
 

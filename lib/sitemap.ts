@@ -8,9 +8,45 @@ const parser = new XMLParser({
   trimValues: true,
 });
 
+type XmlValue = string | number | boolean | null | undefined | Record<string, unknown> | Array<unknown>;
+
+type SitemapUrlEntry = {
+  loc?: string;
+  lastmod?: string;
+  image?: unknown;
+};
+
+type SitemapIndexEntry = {
+  loc?: string;
+};
+
 function asArray<T>(value: T | T[] | undefined): T[] {
   if (!value) return [];
   return Array.isArray(value) ? value : [value];
+}
+
+function isRecord(value: unknown): value is Record<string, unknown> {
+  return typeof value === 'object' && value !== null;
+}
+
+function toSitemapUrlEntry(value: unknown): SitemapUrlEntry | null {
+  if (!isRecord(value)) return null;
+
+  const loc = typeof value.loc === 'string' ? value.loc : undefined;
+  const lastmod = typeof value.lastmod === 'string' ? value.lastmod : undefined;
+
+  return {
+    loc,
+    lastmod,
+    image: value.image,
+  };
+}
+
+function toSitemapIndexEntry(value: unknown): SitemapIndexEntry | null {
+  if (!isRecord(value)) return null;
+
+  const loc = typeof value.loc === 'string' ? value.loc : undefined;
+  return { loc };
 }
 
 function classifyBySitemapUrl(sitemapUrl: string): SitemapDiscoveredUrl['type'] {
@@ -36,22 +72,37 @@ async function fetchXml(url: string): Promise<string> {
   return response.text();
 }
 
+function parseXml(xml: string): Record<string, XmlValue> {
+  const parsed: unknown = parser.parse(xml);
+  if (!isRecord(parsed)) {
+    throw new Error('Invalid XML document structure');
+  }
+
+  return parsed;
+}
+
 async function parseOneSitemapUrl(sitemapUrl: string): Promise<SitemapDiscoveredUrl[]> {
   const xml = await fetchXml(sitemapUrl);
-  const doc = parser.parse(xml);
-  const urls = asArray(doc?.urlset?.url);
+  const doc = parseXml(xml);
+
+  const urlset = isRecord(doc.urlset) ? doc.urlset : undefined;
+  const urlsRaw = isRecord(urlset) ? urlset.url : undefined;
+  const urls = asArray(urlsRaw)
+    .map((item) => toSitemapUrlEntry(item))
+    .filter((item): item is SitemapUrlEntry => item !== null);
+
   const type = classifyBySitemapUrl(sitemapUrl);
 
   return urls
-    .map((entry: any): SitemapDiscoveredUrl | null => {
-      const loc = entry?.loc;
-      if (!loc || typeof loc !== 'string') return null;
+    .map((entry): SitemapDiscoveredUrl | null => {
+      const loc = entry.loc;
+      if (!loc) return null;
 
-      const imageNodes = asArray(entry?.image);
+      const imageNodes = asArray(entry.image);
       const imageCount = imageNodes.length;
 
       let lastmod: Date | null = null;
-      if (typeof entry?.lastmod === 'string') {
+      if (entry.lastmod) {
         const date = new Date(entry.lastmod);
         if (!Number.isNaN(date.getTime())) {
           lastmod = date;
@@ -71,16 +122,22 @@ async function parseOneSitemapUrl(sitemapUrl: string): Promise<SitemapDiscovered
 
 export async function discoverUrlsFromSitemapIndex(indexUrl: string): Promise<SitemapDiscoveredUrl[]> {
   const xml = await fetchXml(indexUrl);
-  const doc = parser.parse(xml);
+  const doc = parseXml(xml);
 
-  const sitemapEntries = asArray(doc?.sitemapindex?.sitemap);
+  const sitemapIndex = isRecord(doc.sitemapindex) ? doc.sitemapindex : undefined;
+  const sitemapRaw = isRecord(sitemapIndex) ? sitemapIndex.sitemap : undefined;
+
+  const sitemapEntries = asArray(sitemapRaw)
+    .map((item) => toSitemapIndexEntry(item))
+    .filter((item): item is SitemapIndexEntry => item !== null);
+
   if (sitemapEntries.length === 0) {
     return parseOneSitemapUrl(indexUrl);
   }
 
   const childSitemaps = sitemapEntries
-    .map((entry: any) => entry?.loc)
-    .filter((value: unknown): value is string => typeof value === 'string');
+    .map((entry) => entry.loc)
+    .filter((value): value is string => typeof value === 'string');
 
   const results = await Promise.all(childSitemaps.map((s) => parseOneSitemapUrl(s)));
 
