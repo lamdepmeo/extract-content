@@ -1,0 +1,11 @@
+[build]
+  command = "npm run build"
+  publish = ".next"
+
+[functions]
+  directory = "netlify/functions"
+  node_bundler = "esbuild"
+
+[[scheduled.functions]]
+  name = "cron-process"
+  cron = "*/15 * * * *"
