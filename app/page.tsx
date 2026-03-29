@@ -57,7 +57,7 @@ export default function HomePage() {
   async function refreshJob() {
     if (!jobId) return;
     setLoading(true);
-    const res = await fetch(`/api/jobs/${jobId}`);
+    const res = await fetch(`/api/jobs/${jobId}?limit=5000`);
     const data = (await res.json()) as JobResponse;
     setResult(data);
     setLoading(false);
