@@ -6,15 +6,15 @@ import { analyzeKeywordAndTopic, fetchMainText } from '@/lib/content';
 
 function getBatchSize(limit?: number) {
   if (typeof limit === 'number' && Number.isFinite(limit)) {
-    return Math.min(Math.max(Math.floor(limit), 1), 10);
+    return Math.min(Math.max(Math.floor(limit), 1), 5);
   }
 
-  const envValue = Number(process.env.PROCESS_BATCH_SIZE ?? '3');
+  const envValue = Number(process.env.PROCESS_BATCH_SIZE ?? '1');
   if (Number.isFinite(envValue)) {
-    return Math.min(Math.max(Math.floor(envValue), 1), 10);
+    return Math.min(Math.max(Math.floor(envValue), 1), 5);
   }
 
-  return 3;
+  return 1;
 }
 
 export async function createJobFromSitemap(sitemapUrl: string) {

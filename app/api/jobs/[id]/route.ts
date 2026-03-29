@@ -5,8 +5,8 @@ import { prisma } from '@/lib/prisma';
 export async function GET(_: NextRequest, context: { params: Promise<{ id: string }> }) {
   await ensureDatabaseSchema();
 
-  const limitParam = Number(_.nextUrl.searchParams.get('limit') ?? '200');
-  const recordLimit = Number.isFinite(limitParam) ? Math.min(Math.max(Math.floor(limitParam), 1), 5000) : 200;
+  const limitParam = Number(_.nextUrl.searchParams.get('limit') ?? '5000');
+  const recordLimit = Number.isFinite(limitParam) ? Math.min(Math.max(Math.floor(limitParam), 1), 5000) : 5000;
 
   const { id } = await context.params;
 

@@ -1,7 +1,9 @@
 import * as cheerio from 'cheerio';
 import OpenAI from 'openai';
 
-const openai = process.env.OPENAI_API_KEY ? new OpenAI({ apiKey: process.env.OPENAI_API_KEY }) : null;
+const openai = process.env.OPENAI_API_KEY
+  ? new OpenAI({ apiKey: process.env.OPENAI_API_KEY, timeout: 20000 })
+  : null;
 
 export async function fetchMainText(url: string): Promise<{ text: string; statusCode: number }> {
   const response = await fetch(url, {
@@ -10,6 +12,7 @@ export async function fetchMainText(url: string): Promise<{ text: string; status
       Accept: 'text/html,application/xhtml+xml;q=0.9,*/*;q=0.8',
     },
     cache: 'no-store',
+    signal: AbortSignal.timeout(15000),
   });
 
   const html = await response.text();
