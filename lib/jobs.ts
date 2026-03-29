@@ -1,9 +1,12 @@
 import { JobStatus, Prisma, UrlType } from '@prisma/client';
+import { ensureDatabaseSchema } from '@/lib/db-init';
 import { prisma } from '@/lib/prisma';
 import { discoverUrlsFromSitemapIndex } from '@/lib/sitemap';
 import { analyzeKeywordAndTopic, fetchMainText } from '@/lib/content';
 
 export async function createJobFromSitemap(sitemapUrl: string) {
+  await ensureDatabaseSchema();
+
   const job = await prisma.job.create({
     data: {
       sitemapUrl,
@@ -40,6 +43,8 @@ export async function createJobFromSitemap(sitemapUrl: string) {
 }
 
 export async function processJobBatch(limit = 20) {
+  await ensureDatabaseSchema();
+
   const runningJob = await prisma.job.findFirst({
     where: { status: JobStatus.RUNNING },
     orderBy: { createdAt: 'asc' },

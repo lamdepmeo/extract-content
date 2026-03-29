@@ -1,7 +1,10 @@
 import { NextRequest, NextResponse } from 'next/server';
+import { ensureDatabaseSchema } from '@/lib/db-init';
 import { prisma } from '@/lib/prisma';
 
 export async function GET(_: NextRequest, context: { params: Promise<{ id: string }> }) {
+  await ensureDatabaseSchema();
+
   const { id } = await context.params;
 
   const job = await prisma.job.findUnique({
