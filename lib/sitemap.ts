@@ -8,8 +8,6 @@ const parser = new XMLParser({
   trimValues: true,
 });
 
-type XmlValue = string | number | boolean | null | undefined | Record<string, unknown> | Array<unknown>;
-
 type SitemapUrlEntry = {
   loc?: string;
   lastmod?: string;
@@ -72,7 +70,7 @@ async function fetchXml(url: string): Promise<string> {
   return response.text();
 }
 
-function parseXml(xml: string): Record<string, XmlValue> {
+function parseXml(xml: string): Record<string, unknown> {
   const parsed: unknown = parser.parse(xml);
   if (!isRecord(parsed)) {
     throw new Error('Invalid XML document structure');
