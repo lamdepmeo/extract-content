@@ -37,9 +37,10 @@ Mở `http://localhost:3000`.
 
 1. Push repo lên GitHub.
 2. Import project vào Netlify.
-3. Build command: `npm run build`.
+3. Build command: `npm run build:netlify`.
 4. Thêm env vars (`DATABASE_URL`, `OPENAI_API_KEY`, `CRON_SECRET`).
 5. Trigger deploy.
+6. Netlify build sáº½ tá»± cháº¡y `prisma db push` Ä‘á»ƒ táº¡o/cáº­p nháº­t schema trÃªn database production trÆ°á»›c khi app cháº¡y.
 
 Netlify schedule được cấu hình trong `netlify.toml` và function `netlify/functions/cron-process.ts`.
 
