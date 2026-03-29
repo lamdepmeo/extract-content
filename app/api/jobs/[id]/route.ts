@@ -5,6 +5,9 @@ import { prisma } from '@/lib/prisma';
 export async function GET(_: NextRequest, context: { params: Promise<{ id: string }> }) {
   await ensureDatabaseSchema();
 
+  const limitParam = Number(_.nextUrl.searchParams.get('limit') ?? '200');
+  const recordLimit = Number.isFinite(limitParam) ? Math.min(Math.max(Math.floor(limitParam), 1), 5000) : 200;
+
   const { id } = await context.params;
 
   const job = await prisma.job.findUnique({
@@ -12,7 +15,7 @@ export async function GET(_: NextRequest, context: { params: Promise<{ id: strin
     include: {
       urlRecords: {
         orderBy: { createdAt: 'asc' },
-        take: 200,
+        take: recordLimit,
       },
     },
   });
@@ -45,6 +48,7 @@ export async function GET(_: NextRequest, context: { params: Promise<{ id: strin
       updatedAt: job.updatedAt,
     },
     cannibalizationCandidates,
+    returnedRecords: job.urlRecords.length,
     records: job.urlRecords,
   });
 }

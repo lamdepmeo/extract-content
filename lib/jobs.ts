@@ -4,6 +4,19 @@ import { prisma } from '@/lib/prisma';
 import { discoverUrlsFromSitemapIndex } from '@/lib/sitemap';
 import { analyzeKeywordAndTopic, fetchMainText } from '@/lib/content';
 
+function getBatchSize(limit?: number) {
+  if (typeof limit === 'number' && Number.isFinite(limit)) {
+    return Math.min(Math.max(Math.floor(limit), 1), 10);
+  }
+
+  const envValue = Number(process.env.PROCESS_BATCH_SIZE ?? '3');
+  if (Number.isFinite(envValue)) {
+    return Math.min(Math.max(Math.floor(envValue), 1), 10);
+  }
+
+  return 3;
+}
+
 export async function createJobFromSitemap(sitemapUrl: string) {
   await ensureDatabaseSchema();
 
@@ -42,8 +55,10 @@ export async function createJobFromSitemap(sitemapUrl: string) {
   return job;
 }
 
-export async function processJobBatch(limit = 20) {
+export async function processJobBatch(limit?: number) {
   await ensureDatabaseSchema();
+
+  const batchSize = getBatchSize(limit);
 
   const runningJob = await prisma.job.findFirst({
     where: { status: JobStatus.RUNNING },
@@ -59,7 +74,7 @@ export async function processJobBatch(limit = 20) {
       type: UrlType.POST,
     },
     orderBy: { createdAt: 'asc' },
-    take: limit,
+    take: batchSize,
   });
 
   if (pending.length === 0) {

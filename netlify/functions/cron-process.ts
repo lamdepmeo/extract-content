@@ -3,7 +3,7 @@ import { processJobBatch } from '../../lib/jobs';
 
 export const handler: Handler = async () => {
   try {
-    const result = await processJobBatch(20);
+    const result = await processJobBatch();
 
     return {
       statusCode: 200,
